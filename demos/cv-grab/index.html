@@ -6,6 +6,7 @@
   <title>Blockly Demo: Fixed Blockly</title>
   <script src='../../blockly_compressed.js'></script>
   <script src='../../blocks_compressed.js'></script>
+  <script src="../../javascript_compressed.js"></script>
   <script src='../../msg/js/zh-hans.js'></script>
   <style>
     body {
@@ -16,99 +17,266 @@
 </head>
 
 <body>
+  <div>
+    <button id="showButton" onclick="window.codeEditors[0]._generateCode()">show</button>
+    <button id="runButton" onclick="window.codeEditors[0]._runCode()">run</button>
+    <button id="dumpButton" onclick="window.codeEditors[0]._generateXml()">dump</button>
+    <button id="compareButton" onclick="window.codeEditors[0]._compareXml()">compare</button>
+    <button id="loadButton" onclick="window.codeEditors[0]._loadXml()">load</button>
+  </div>
   <div id='blocklyDiv' style='height: 480px; width: 600px;'></div>
 
   <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
+    <block type="text_print"></block>
+    <block type="variables_get">
+      <field name="VAR" id="]BMrwz6fOMJY=.sIU!`6">原始图片</field>
+    </block>
     <block type="variables_set">
-      <field name="VAR" id="]BMrwz6fOMJY=.sIU!`6">图片</field>
+      <field name="VAR" id="]BMrwz6fOMJY=.sIU!`6">原始图片</field>
     </block>
     <block type="camera_snapshot"></block>
-    <block type="controls_if"></block>
     <block type="wait_for_sensor_signal">
       <field name="sensor">光电传感器</field>
     </block>
   </xml>
 
-  <xml xmlns="https://developers.google.com/blockly/xml" id="workspaceBlocks" style="display: none"></xml>
-
   <script>
-    Blockly.defineBlocksWithJsonArray([{
-      "type": "camera_snapshot",
-      "message0": "相机拍照",
-      "output": null,
-      "colour": 120,
-      "tooltip": "相机拍照。",
-      "helpUrl": ""
-    }, {
-      "type": "wait_for_sensor_signal",
-      "message0": "等待传感器信号 %1 %2",
-      "args0": [
-        {
-          "type": "field_dropdown",
-          "name": "sensor",
-          "options": [
-            [
-              "光电传感器",
-              "光电传感器"
-            ]
-          ]
-        },
-        {
-          "type": "input_value",
-          "name": "sensor"
-        }
-      ],
-      "previousStatement": null,
-      "nextStatement": null,
-      "colour": 230,
-      "tooltip": "等待指定的传感器信号。",
-      "helpUrl": ""
-    }]);
+    var CodeEditor = {
+      workspace: null,
+      toolbox: null,
+      eventHandler: null,
+      storybook: {},
+      storybookMode: false,
+      storybookStep: null,
+      initialize: function (container, toolbox, eventHandler) {
+        Blockly.defineBlocksWithJsonArray([{
+          "type": "camera_snapshot",
+          "message0": "相机拍照",
+          "output": null,
+          "colour": 120,
+          "tooltip": "相机拍照。",
+          "helpUrl": ""
+        }, {
+          "type": "wait_for_sensor_signal",
+          "message0": "等待传感器信号 %1 %2",
+          "args0": [
+            {
+              "type": "field_dropdown",
+              "name": "sensor",
+              "options": [
+                [
+                  "光电传感器",
+                  "光电传感器"
+                ]
+              ]
+            },
+            {
+              "type": "input_value",
+              "name": "sensor"
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "等待指定的传感器信号。",
+          "helpUrl": "http://www.baidu.com"
+        }]);
 
-    /* TODO: Change toolbox XML ID if necessary. Can export toolbox XML from Workspace Factory. */
-    var toolbox = document.getElementById("toolbox");
+        Blockly.JavaScript['camera_snapshot'] = function (block) {
+          var code = 'camera_snapshot()';
+          return [code, Blockly.JavaScript.ORDER_NONE];
+        };
 
-    var options = {
-      toolbox: toolbox,
-      collapse: false,
-      comments: true,
-      disable: false,
-      maxBlocks: Infinity,
-      trashcan: true,
-      horizontalLayout: false,
-      toolboxPosition: 'start',
-      css: true,
-      media: '../../media/',
-      rtl: false,
-      scrollbars: true,
-      sounds: true,
-      oneBasedIndex: true,
-      grid: {
-        spacing: 20,
-        length: 1,
-        colour: '#888',
-        snap: false
+        Blockly.JavaScript['wait_for_sensor_signal'] = function (block) {
+          var code = 'wait_for_sensor_signal();\n';
+          return code;
+        };
+
+        /* TODO: Change toolbox XML ID if necessary. Can export toolbox XML from Workspace Factory. */
+        this.toolbox = document.getElementById(toolbox);
+        this.eventHandler = eventHandler;
+
+        var options = {
+          toolbox: this.toolbox,
+          collapse: false,
+          comments: true,
+          disable: false,
+          maxBlocks: Infinity,
+          trashcan: true,
+          horizontalLayout: false,
+          toolboxPosition: 'start',
+          css: true,
+          media: '../../media/',
+          rtl: false,
+          scrollbars: true,
+          sounds: true,
+          oneBasedIndex: true,
+          grid: {
+            spacing: 20,
+            length: 1,
+            colour: '#888',
+            snap: true
+          },
+          zoom: {
+            controls: true,
+            wheel: true,
+            startScale: 1,
+            maxScale: 3,
+            minScale: 0.3,
+            scaleSpeed: 1.2
+          }
+        };
+
+        this.workspace = Blockly.inject(container, options);
+        this.workspace.addChangeListener(this._eventHandler.bind(this));
       },
-      zoom: {
-        controls: true,
-        wheel: true,
-        startScale: 1,
-        maxScale: 3,
-        minScale: 0.3,
-        scaleSpeed: 1.2
+
+      destroy: function () {
+        this.workspace.removeChangeListener(this._eventHandler.bind(this));
+      },
+
+      setStorybook: function (storybook) {
+        this.storybook = storybook;
+      },
+
+      startStorybook: function (stage) {
+        this.storybookMode = true;
+        this.eventHandler && this.eventHandler['startStage'] && this.eventHandler['startStage'](stage);
+        this.startStep(stage, 0);
+      },
+
+      stopStorybook: function () {
+        this.storybookMode = false;
+      },
+
+      startStep: function (stage, step) {
+        if (step >= this.storybook[stage].length) {
+          return false;
+        }
+
+        var _step = this.storybook[stage][step];
+        this._disableAllBlocks();
+        this._enableBlocks(_step.blocks);
+        this._loadXml(_step.workspace);
+        this.storybookStep = { stage: stage, step: step, _step: _step };
+        this.eventHandler && this.eventHandler['startStep'] && this.eventHandler['startStep'](this.storybookStep);
+
+        return true;
+      },
+
+      nextStep: function () {
+        if (!this.startStep(this.storybookStep.stage, ++this.storybookStep.step)) {
+          this.eventHandler && this.eventHandler['stopStage'] && this.eventHandler['stopStage'](this.storybookStep.stage);
+        }
+      },
+
+      _enableBlocks: function (blocks) {
+        for (var i = 0; i < this.toolbox.children.length; i++) {
+          if (blocks.indexOf(this.toolbox.children[i].getAttribute('type')) >= 0) {
+            this.toolbox.children[i].setAttribute('disabled', false);
+          }
+        }
+        this.workspace.updateToolbox(this.toolbox);
+        console.log(this.toolbox);
+      },
+
+      _disableAllBlocks: function () {
+        for (var i = 0; i < this.toolbox.children.length; i++) {
+          this.toolbox.children[i].setAttribute('disabled', true);
+        }
+        this.workspace.updateToolbox(this.toolbox);
+        console.log(this.toolbox);
+      },
+
+      _generateXml: function () {
+        var xml = Blockly.Xml.workspaceToDom(this.workspace);
+        console.debug(xml);
+        return xml;
+      },
+
+      _compareXml: function (xml) {
+        var reg = xml.replace(/\//g, '\\/')
+          .replace(/id=\"([^\"]*)\"/g, 'id="([^\\"]*)"')
+          .replace(/x=\"([^\"]*)\"/g, 'x="([^\\"]*)"')
+          .replace(/y=\"([^\"]*)\"/g, 'y="([^\\"]*)"');
+        var src = this._generateXml().outerHTML;
+        var pos = src.search(new RegExp(reg))
+        console.debug(pos);
+        return pos === 0;
+      },
+
+      _loadXml: function (xml) {
+        var dom = (typeof (xml) === 'string') ? Blockly.Xml.textToDom(xml) : xml;
+        Blockly.Xml.clearWorkspaceAndLoadFromXml(dom, this.workspace);
+      },
+
+      _generateCode: function () {
+        var code = Blockly.JavaScript.workspaceToCode(this.workspace);
+        console.debug(code);
+        return code;
+      },
+
+      _runCode: function () {
+        try {
+          eval(this._generateCode());
+        } catch (e) {
+          console.debug(e);
+        }
+      },
+
+      _eventHandler: function (event) {
+        console.log(event);
+        if ((this.storybookMode) && (this.storybookStep !== null)) {
+          if (event.element === 'dragStop') {
+            if (this._compareXml(this.storybookStep._step.expect)) {
+              this.eventHandler && this.eventHandler['stopStep'] && this.eventHandler['stopStep'](this.storybookStep);
+            }
+          }
+        }
       }
     };
 
-    /* Inject your workspace */
-    var workspace = Blockly.inject('blocklyDiv', options);
+    function camera_snapshot() {
+      return '123';
+    }
 
-    /* Load Workspace Blocks from XML to workspace. Remove all code below if no blocks to load */
+    function wait_for_sensor_signal() {
+    }
 
-    /* TODO: Change workspace blocks XML ID if necessary. Can export workspace blocks XML from Workspace Factory. */
-    var workspaceBlocks = document.getElementById("workspaceBlocks");
+    var storybook = {
+      stage1: [
+        {
+          name: 'step1',
+          blocks: ['wait_for_sensor_signal'],
+          workspace: '<xml></xml>',
+          expect: '<xml><block type="wait_for_sensor_signal" id="ujxLqORLSTv~h}xDbbEo" x="50" y="110"><field name="sensor">光电传感器</field></block></xml>'
+        },
+        {
+          name: 'step2',
+          blocks: ['variables_set', 'camera_snapshot'],
+          workspace: '<xml><block type="wait_for_sensor_signal" id="ujxLqORLSTv~h}xDbbEo" x="50" y="110"><field name="sensor">光电传感器</field></block></xml>',
+          expect: '<xml><variables><variable id="]BMrwz6fOMJY=.sIU!`6">原始图片</variable></variables><block type="wait_for_sensor_signal" id="NXs%($aoIQOnzV_3/;s}" x="50" y="90"><field name="sensor">光电传感器</field><next><block type="variables_set" id="C:)h:(9^|ru^S,!0@(#s"><field name="VAR" id="]BMrwz6fOMJY=.sIU!`6">原始图片</field><value name="VALUE"><block type="camera_snapshot" id="[4FMs1/HuN}kynY9!W/)"></block></value></block></next></block></xml>'
+        }
+      ]
+    };
 
-    /* Load blocks to workspace. */
-    Blockly.Xml.domToWorkspace(workspaceBlocks, workspace);
+    window.codeEditors = [Object.create(CodeEditor)];
+    window.codeEditors[0].initialize('blocklyDiv', 'toolbox', {
+      startStage: function (stage) {
+        alert('stage start');
+      },
+      stopStage: function (stage) {
+        alert('stage over');
+      },
+      startStep: function (step) {
+        alert('step start');
+      },
+      stopStep: function (step) {
+        window.codeEditors[0].nextStep();
+      },
+    });
+    window.codeEditors[0].setStorybook(storybook);
+    window.codeEditors[0].startStorybook('stage1');
   </script>
 
 </body>
