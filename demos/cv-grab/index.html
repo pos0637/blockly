@@ -27,17 +27,27 @@
   <div id='blocklyDiv' style='height: 480px; width: 600px;'></div>
 
   <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
-    <block type="text_print"></block>
-    <block type="variables_get">
-      <field name="VAR" id="]BMrwz6fOMJY=.sIU!`6">原始图片</field>
-    </block>
-    <block type="variables_set">
-      <field name="VAR" id="]BMrwz6fOMJY=.sIU!`6">原始图片</field>
-    </block>
-    <block type="camera_snapshot"></block>
-    <block type="wait_for_sensor_signal">
-      <field name="sensor">光电传感器</field>
-    </block>
+    <category name="设备控制">
+      <block type="wait_for_sensor_signal">
+        <field name="sensor">光电传感器</field>
+      </block>
+      <block type="camera_snapshot"></block>
+    </category>
+    <category name="阈值算子">
+    </category>
+    <category name="形态学算子">
+    </category>
+    <category name="定位算子">
+      <block type="text_print"></block>
+    </category>
+    <category name="逻辑控制">
+      <block type="variables_get">
+        <field name="VAR" id="]BMrwz6fOMJY=.sIU!`6">图片</field>
+      </block>
+      <block type="variables_set">
+        <field name="VAR" id="]BMrwz6fOMJY=.sIU!`6">图片</field>
+      </block>
+    </category>
   </xml>
 
   <script>
@@ -51,7 +61,21 @@
       initialize: function (container, toolbox, eventHandler) {
         Blockly.defineBlocksWithJsonArray([{
           "type": "camera_snapshot",
-          "message0": "相机拍照",
+          "message0": "相机拍照 曝光值： %1 %2",
+          "args0": [
+            {
+              "type": "field_number",
+              "name": "exposure",
+              "value": 10000,
+              "min": 0,
+              "max": 20000,
+              "precision": 0
+            },
+            {
+              "type": "input_value",
+              "name": "exportion"
+            }
+          ],
           "output": null,
           "colour": 120,
           "tooltip": "相机拍照。",
@@ -83,7 +107,9 @@
         }]);
 
         Blockly.JavaScript['camera_snapshot'] = function (block) {
-          var code = 'camera_snapshot()';
+          var number_exposure = block.getFieldValue('exposure');
+          var value_exposure = Blockly.JavaScript.valueToCode(block, 'exposure', Blockly.JavaScript.ORDER_ATOMIC);
+          var code = `camera_snapshot(${number_exposure})`;
           return [code, Blockly.JavaScript.ORDER_NONE];
         };
 
@@ -172,8 +198,11 @@
 
       _enableBlocks: function (blocks) {
         for (var i = 0; i < this.toolbox.children.length; i++) {
-          if (blocks.indexOf(this.toolbox.children[i].getAttribute('type')) >= 0) {
-            this.toolbox.children[i].setAttribute('disabled', false);
+          var category = this.toolbox.children[i];
+          for (var j = 0; j < category.children.length; j++) {
+            if (blocks.indexOf(category.children[j].getAttribute('type')) >= 0) {
+              category.children[j].setAttribute('disabled', false);
+            }
           }
         }
         this.workspace.updateToolbox(this.toolbox);
@@ -182,7 +211,10 @@
 
       _disableAllBlocks: function () {
         for (var i = 0; i < this.toolbox.children.length; i++) {
-          this.toolbox.children[i].setAttribute('disabled', true);
+          var category = this.toolbox.children[i];
+          for (var j = 0; j < category.children.length; j++) {
+            category.children[j].setAttribute('disabled', true);
+          }
         }
         this.workspace.updateToolbox(this.toolbox);
         console.log(this.toolbox);
@@ -236,8 +268,9 @@
       }
     };
 
-    function camera_snapshot() {
-      return '123';
+    function camera_snapshot(exposure) {
+      alert(exposure);
+      return exposure;
     }
 
     function wait_for_sensor_signal() {
@@ -255,7 +288,7 @@
           name: 'step2',
           blocks: ['variables_set', 'camera_snapshot'],
           workspace: '<xml><block type="wait_for_sensor_signal" id="ujxLqORLSTv~h}xDbbEo" x="50" y="110"><field name="sensor">光电传感器</field></block></xml>',
-          expect: '<xml><variables><variable id="]BMrwz6fOMJY=.sIU!`6">原始图片</variable></variables><block type="wait_for_sensor_signal" id="NXs%($aoIQOnzV_3/;s}" x="50" y="90"><field name="sensor">光电传感器</field><next><block type="variables_set" id="C:)h:(9^|ru^S,!0@(#s"><field name="VAR" id="]BMrwz6fOMJY=.sIU!`6">原始图片</field><value name="VALUE"><block type="camera_snapshot" id="[4FMs1/HuN}kynY9!W/)"></block></value></block></next></block></xml>'
+          expect: '<xml><variables><variable id="]BMrwz6fOMJY=.sIU!`6">图片</variable></variables><block type="wait_for_sensor_signal" id="ujxLqORLSTv~h}xDbbEo" x="50" y="110"><field name="sensor">光电传感器</field><next><block type="variables_set" id="E3y~Xq*QhO]-!Mn)f];r"><field name="VAR" id="]BMrwz6fOMJY=.sIU!`6">图片</field><value name="VALUE"><block type="camera_snapshot" id="`9~=nQ|JjkL()S/]7R8."><field name="exposure">10000</field></block></value></block></next></block></xml>'
         }
       ]
     };
