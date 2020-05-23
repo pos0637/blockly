@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset='utf-8'>
+  <title>Blockly Demo: Fixed Blockly</title>
+  <script src='../../blockly_compressed.js'></script>
+  <script src='../../blocks_compressed.js'></script>
+  <script src='../../msg/js/zh-hans.js'></script>
+  <style>
+    body {
+      background-color: #fff;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+  <div id='blocklyDiv' style='height: 480px; width: 600px;'></div>
+
+  <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
+    <block type="variables_set">
+      <field name="VAR" id="]BMrwz6fOMJY=.sIU!`6">图片</field>
+    </block>
+    <block type="camera_snapshot"></block>
+    <block type="controls_if"></block>
+    <block type="wait_for_sensor_signal">
+      <field name="sensor">光电传感器</field>
+    </block>
+  </xml>
+
+  <xml xmlns="https://developers.google.com/blockly/xml" id="workspaceBlocks" style="display: none"></xml>
+
+  <script>
+    Blockly.defineBlocksWithJsonArray([{
+      "type": "camera_snapshot",
+      "message0": "相机拍照",
+      "output": null,
+      "colour": 120,
+      "tooltip": "相机拍照。",
+      "helpUrl": ""
+    }, {
+      "type": "wait_for_sensor_signal",
+      "message0": "等待传感器信号 %1 %2",
+      "args0": [
+        {
+          "type": "field_dropdown",
+          "name": "sensor",
+          "options": [
+            [
+              "光电传感器",
+              "光电传感器"
+            ]
+          ]
+        },
+        {
+          "type": "input_value",
+          "name": "sensor"
+        }
+      ],
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 230,
+      "tooltip": "等待指定的传感器信号。",
+      "helpUrl": ""
+    }]);
+
+    /* TODO: Change toolbox XML ID if necessary. Can export toolbox XML from Workspace Factory. */
+    var toolbox = document.getElementById("toolbox");
+
+    var options = {
+      toolbox: toolbox,
+      collapse: false,
+      comments: true,
+      disable: false,
+      maxBlocks: Infinity,
+      trashcan: true,
+      horizontalLayout: false,
+      toolboxPosition: 'start',
+      css: true,
+      media: '../../media/',
+      rtl: false,
+      scrollbars: true,
+      sounds: true,
+      oneBasedIndex: true,
+      grid: {
+        spacing: 20,
+        length: 1,
+        colour: '#888',
+        snap: false
+      },
+      zoom: {
+        controls: true,
+        wheel: true,
+        startScale: 1,
+        maxScale: 3,
+        minScale: 0.3,
+        scaleSpeed: 1.2
+      }
+    };
+
+    /* Inject your workspace */
+    var workspace = Blockly.inject('blocklyDiv', options);
+
+    /* Load Workspace Blocks from XML to workspace. Remove all code below if no blocks to load */
+
+    /* TODO: Change workspace blocks XML ID if necessary. Can export workspace blocks XML from Workspace Factory. */
+    var workspaceBlocks = document.getElementById("workspaceBlocks");
+
+    /* Load blocks to workspace. */
+    Blockly.Xml.domToWorkspace(workspaceBlocks, workspace);
+  </script>
+
+</body>
+
+</html>
